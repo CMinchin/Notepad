@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3001;
@@ -16,31 +17,39 @@ app.get('/notes', (req, res) =>
   res.sendFile(path.join(__dirname, '/public/notes.html'))
 );
 
-// Wildcard route to direct users to a 404 page
-app.get('*', (req, res) =>
-  res.sendFile(path.join(__dirname, 'public/index.html'))
-);
 
 app.get("/api/notes", (req, res) => {
-    let notes = {};
-    //read db
-
+    let file = fs.readFileSync("./db/db.json");
+    let notes = JSON.parse(file);
+    
     res.json(notes);
 });
 
 app.post("/api/notes", (req, res) => {
+    let note;
     try {
-        let note = JSON.parse(req.body);
+        note = req.body
     } catch (error) {
         res.status(400).send("Cannot convert to JSON: " + error);
         return;
     }
-
-    // add to database
-
+    
+    
+    let file = fs.readFileSync("./db/db.json");
+    let notes = JSON.parse(file);
+    
+    notes.push(note);
+    
+    fs.writeFileSync("./db/db.json", JSON.stringify(notes))
+    
     res.json(note);
 });
 
+// Wildcard route to direct users to the home page
+app.get('*', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public/index.html'))
+);
+
 app.listen(PORT, () =>
-  console.log(`App listening at http://localhost:${PORT} 🚀`)
+console.log(`App listening at http://localhost:${PORT} 🚀`)
 );
